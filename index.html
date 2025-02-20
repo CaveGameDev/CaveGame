@@ -27,6 +27,7 @@
             margin: 0 auto;
             left: 0;
             right: 0;
+            z-index: 10; /* Ensure controls are above canvas */
         }
         .joystick-base {
             width: 100px;
@@ -54,6 +55,7 @@
             width: 20px;
             height: 20px;
             pointer-events: none;
+            z-index: 10;
         }
         .crosshair::before,
         .crosshair::after {
@@ -84,6 +86,7 @@
             pointer-events: none;
             max-width: 600px;
             margin: 0 auto;
+            z-index: 10; /* Ensure controls are above canvas */
         }
         .control-button {
             width: 60px;
@@ -119,9 +122,9 @@
         </div>
     </div>
     <div class="bottom-controls">
+        <div id="breakButton" class="control-button">BREAK</div>
         <div id="placeButton" class="control-button">PLACE</div>
         <div id="jumpButton" class="control-button">JUMP</div>
-        <div id="breakButton" class="control-button">BREAK</div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script type="module" src="game.js"></script>
