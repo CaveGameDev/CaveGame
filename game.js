@@ -3,14 +3,10 @@ import { Player } from './player.js';
 
 class Game {
   constructor() {
-    // Ensure mobile controls are already present
-    this.ensureMobileControlsVisibility();
-
     this.setupRenderer();
     this.setupScene();
     this.setupLighting();
     
-    // Ensure Three.js is fully loaded before creating world and player
     if (typeof THREE !== 'undefined') {
       this.world = new World(this.scene);
       this.player = new Player(this.camera, this.world);
@@ -19,42 +15,29 @@ class Game {
       this.frameCount = 0;
       this.lastFpsUpdate = 0;
       
-      this.animate();
       this.setupEventListeners();
+      this.ensureMobileControlsVisibility();
+      this.animate();
     } else {
       console.error('Three.js is not loaded');
     }
   }
 
-  ensureMobileControlsVisibility() {
-    // Explicitly ensure mobile controls are visible
-    const mobileControls = document.querySelectorAll('.mobile-controls, .bottom-controls');
-    mobileControls.forEach(control => {
-      control.style.display = 'flex';
-      control.style.visibility = 'visible';
-      control.style.opacity = '1';
-    });
-  }
-
   setupRenderer() {
-    // Create renderer with additional parameters for better compatibility
     this.renderer = new THREE.WebGLRenderer({
       antialias: false, 
       powerPreference: "high-performance",
-      alpha: true, // Add alpha channel support
-      preserveDrawingBuffer: true // Helps with some rendering issues
+      alpha: true,
+      preserveDrawingBuffer: false  // Optimize memory usage
     });
     
-    // Improved rendering settings
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.setClearColor(0x78A7FF, 1); // Explicit clear color
+    this.renderer.setClearColor(0x7FCDFE, 1); 
     this.renderer.shadowMap.enabled = false;
 
-    // Size and append renderer
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(this.renderer.domElement);
     
-    // Ensure canvas takes full viewport
     this.renderer.domElement.style.position = 'fixed';
     this.renderer.domElement.style.top = '0';
     this.renderer.domElement.style.left = '0';
@@ -63,10 +46,9 @@ class Game {
 
   setupScene() {
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x78A7FF); 
+    this.scene.background = new THREE.Color(0x7FCDFE); 
     
-    // Adjust camera settings for better performance and compatibility
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 20);
+    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 300);
     this.camera.matrixAutoUpdate = true;
   }
 
@@ -86,6 +68,15 @@ class Game {
     document.addEventListener('mousemove', (e) => this.player.handleMouseMove(e), false);
   }
 
+  ensureMobileControlsVisibility() {
+    const mobileControls = document.querySelectorAll('.mobile-controls, .bottom-controls');
+    mobileControls.forEach(control => {
+      control.style.display = 'flex';
+      control.style.visibility = 'visible';
+      control.style.opacity = '1';
+    });
+  }
+
   onWindowResize() {
     this.camera.aspect = window.innerWidth / window.innerHeight;
     this.camera.updateProjectionMatrix();
@@ -93,29 +84,58 @@ class Game {
   }
 
   animate() {
-    requestAnimationFrame(() => this.animate());
+    try {
+      requestAnimationFrame(() => this.animate());
+      
+      const currentTime = performance.now();
+      const deltaTime = (currentTime - this.lastTime) / 1000;
+      this.lastTime = currentTime;
+      
+      this.player.update(deltaTime);
+      this.renderer.render(this.scene, this.camera);
+      
+      this.frameCount++;
+      if (currentTime - this.lastFpsUpdate >= 1000) {
+        console.log(`FPS: ${this.frameCount}`);
+        this.frameCount = 0;
+        this.lastFpsUpdate = currentTime;
+      }
+    } catch (error) {
+      console.error('Animation loop error:', error);
+    }
+  }
+
+  dispose() {
+    // Clean up resources
+    window.removeEventListener('resize', this.onWindowResize);
     
-    const currentTime = performance.now();
-    const deltaTime = (currentTime - this.lastTime) / 1000;
-    this.lastTime = currentTime;
+    if (this.world) {
+      this.world.dispose();
+    }
     
-    this.player.update(deltaTime);
-    this.renderer.render(this.scene, this.camera);
-    
-    this.frameCount++;
-    if (currentTime - this.lastFpsUpdate >= 1000) {
-      console.log(`FPS: ${this.frameCount}`);
-      this.frameCount = 0;
-      this.lastFpsUpdate = currentTime;
+    if (this.renderer) {
+      this.renderer.dispose();
+      document.body.removeChild(this.renderer.domElement);
     }
   }
 }
 
-// Ensure Three.js is loaded before initializing the game
 window.addEventListener('load', () => {
-  if (typeof THREE !== 'undefined') {
-    new Game();
-  } else {
-    console.error('Three.js script must be loaded before game.js');
+  let game;
+  try {
+    if (typeof THREE !== 'undefined') {
+      game = new Game();
+    } else {
+      console.error('Three.js script must be loaded before game.js');
+    }
+
+    // Optional: Add cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (game) {
+        game.dispose();
+      }
+    });
+  } catch (error) {
+    console.error('Game initialization error:', error);
   }
 });

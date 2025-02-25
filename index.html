@@ -4,6 +4,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CaveGame</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#7FCDFE">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -17,17 +22,27 @@
         canvas { width: 100%; height: 100%; }
         .mobile-controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 20px;  
             left: 20px;
             right: 20px;
-            display: flex;
+            display: none; 
             justify-content: space-between;
             pointer-events: none;
             max-width: 600px; 
             margin: 0 auto;
             left: 0;
             right: 0;
-            z-index: 10; /* Ensure controls are above canvas */
+            z-index: 10;
+        }
+        .mobile-controls .left-column,
+        .mobile-controls .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center; 
+        }
+        .mobile-controls .joystick-base {
+            margin-top: 10px; 
         }
         .joystick-base {
             width: 100px;
@@ -77,16 +92,16 @@
         }
         .bottom-controls {
             position: fixed;
-            bottom: 20px;
+            bottom: 120px;  
             left: 0;
             right: 0;
-            display: flex;
+            display: none; 
             justify-content: center;
             gap: 20px;
             pointer-events: none;
             max-width: 600px;
             margin: 0 auto;
-            z-index: 10; /* Ensure controls are above canvas */
+            z-index: 10;
         }
         .control-button {
             width: 60px;
@@ -114,18 +129,78 @@
 <body>
     <div class="crosshair"></div>
     <div class="mobile-controls">
-        <div id="moveJoystick" class="joystick-base">
-            <div class="joystick-thumb"></div>
+        <div class="left-column">
+            <div id="breakButton" class="control-button">BREAK</div>
+            <div id="moveJoystick" class="joystick-base">
+                <div class="joystick-thumb"></div>
+            </div>
         </div>
-        <div id="lookJoystick" class="joystick-base">
-            <div class="joystick-thumb"></div>
+        <div class="right-column">
+            <div id="placeButton" class="control-button">PLACE</div>
+            <div id="lookJoystick" class="joystick-base">
+                <div class="joystick-thumb"></div>
+            </div>
         </div>
     </div>
     <div class="bottom-controls">
-        <div id="breakButton" class="control-button">BREAK</div>
-        <div id="placeButton" class="control-button">PLACE</div>
         <div id="jumpButton" class="control-button">JUMP</div>
     </div>
+    <script>
+        function blockAdScripts() {
+            const scriptElements = document.getElementsByTagName('script');
+            for (let script of scriptElements) {
+                const src = script.src.toLowerCase();
+                if (src.includes('ad.js') || 
+                    src.includes('ads.js') || 
+                    src.includes('advertisement.js') || 
+                    src.includes('advert.js') ||
+                    src.includes('adsbygoogle.js')) {
+                    script.remove();
+                    console.warn('Blocked potential ad script:', src);
+                }
+            }
+        }
+
+        blockAdScripts();
+        setInterval(blockAdScripts, 5000);
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                        
+                        window.addEventListener('beforeinstallprompt', (e) => {
+                            e.preventDefault();
+                            const installPrompt = e;
+                            
+                            const installButton = document.createElement('button');
+                            installButton.textContent = 'Install Game';
+                            installButton.style.position = 'fixed';
+                            installButton.style.top = '10px';
+                            installButton.style.right = '10px';
+                            installButton.style.zIndex = '100';
+                            
+                            installButton.addEventListener('click', () => {
+                                installPrompt.prompt();
+                                installPrompt.userChoice.then((choiceResult) => {
+                                    if (choiceResult.outcome === 'accepted') {
+                                        console.log('User accepted the install prompt');
+                                    } else {
+                                        console.log('User dismissed the install prompt');
+                                    }
+                                });
+                            });
+                            
+                            document.body.appendChild(installButton);
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script type="module" src="game.js"></script>
 </body>

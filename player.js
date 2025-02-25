@@ -2,10 +2,17 @@ export class Player {
   constructor(camera, world) {
     this.camera = camera;
     this.world = world;
-    this.speed = 3;
-    this.moveDirection = { forward: false, backward: false, left: false, right: false };
-    this.mouseSensitivity = 0.0005;
-    this.touchSensitivity = 0.002;
+    // Increase base speed from 3 to 4.5
+    this.speed = 4.5;  // 1.5x faster movement speed
+    this.moveDirection = { 
+      forward: false, 
+      backward: false, 
+      left: false, 
+      right: false 
+    };
+    // Increase mouse and touch sensitivity
+    this.mouseSensitivity = 0.0007;  // Increased from 0.0005
+    this.touchSensitivity = 0.0007;  // Increased from 0.0005
     this.rotation = { x: 0, y: 0 };
     this.velocity = new THREE.Vector3();
     this.moveJoystickData = { active: false, startX: 0, startY: 0, moveX: 0, moveY: 0 };
@@ -18,8 +25,8 @@ export class Player {
     this.right = new THREE.Vector3();
     this.direction = new THREE.Vector3();
     
-    // Changed initial spawn position
-    this.camera.position.set(25, 34, 25);
+    // Change initial spawn position to world center
+    this.camera.position.set(this.world.worldWidth / 2, 34, this.world.worldDepth / 2);
     
     // Add eye level offset
     this.eyeLevel = 1.6; // Player's eye height
@@ -32,7 +39,8 @@ export class Player {
     
     this.camera.rotation.order = 'YXZ';
     this.targetRotation = { x: 0, y: 0 };
-    this.rotationLerpFactor = 0.15;
+    // Adjust smoothing for more responsive movement
+    this.rotationLerpFactor = 0.2;  // Increased from 0.15
     
     this.raycaster = new THREE.Raycaster();
     this.breakingCooldown = 500; // 500ms cooldown
@@ -45,9 +53,98 @@ export class Player {
     this.jumpForce = 8; // Increased jump force
     this.verticalVelocity = 0;
     this.isGrounded = false;
+
+    // Add touch detection
+    this.isMobileDevice = this.detectMobileDevice();
+    this.setupControlVisibility();
+    this.setupToggleMobileControls();
+    this.setupEventListeners();
     this.setupMobileControls();
     this.setupBlockBreaking();
     this.setupBlockPlacing();
+  }
+
+  // Detect mobile device
+  detectMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  // Set up control visibility based on device
+  setupControlVisibility() {
+    const mobileControls = document.querySelectorAll('.mobile-controls, .bottom-controls');
+    
+    if (this.isMobileDevice) {
+      mobileControls.forEach(control => {
+        control.style.display = 'flex';
+      });
+    } else {
+      mobileControls.forEach(control => {
+        control.style.display = 'none';
+      });
+    }
+  }
+
+  setupToggleMobileControls() {
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Digit1') {
+        const mobileControls = document.querySelectorAll('.mobile-controls, .bottom-controls');
+        mobileControls.forEach(control => {
+          control.style.display = control.style.display === 'none' ? 'flex' : 'none';
+        });
+      }
+    });
+  }
+
+  setupEventListeners() {
+    // Modify key handling for WASD movement and arrow keys for camera
+    window.addEventListener('keydown', (e) => {
+      switch (e.code) {
+        // Movement (WASD)
+        case 'KeyW': this.moveDirection.forward = true; break;
+        case 'KeyS': this.moveDirection.backward = true; break;
+        case 'KeyA': this.moveDirection.left = true; break;
+        case 'KeyD': this.moveDirection.right = true; break;
+        
+        // Camera rotation (Arrow keys)
+        case 'ArrowLeft': 
+          this.targetRotation.y += 0.1; 
+          break;
+        case 'ArrowRight': 
+          this.targetRotation.y -= 0.1; 
+          break;
+        case 'ArrowUp': 
+          this.targetRotation.x = Math.max(this.minRotationX, this.targetRotation.x - 0.1); 
+          break;
+        case 'ArrowDown': 
+          this.targetRotation.x = Math.min(this.maxRotationX, this.targetRotation.x + 0.1); 
+          break;
+        
+        // Jump
+        case 'Space': 
+          if (this.isGrounded) {
+            this.verticalVelocity = this.jumpForce;
+            this.isGrounded = false;
+          }
+          break;
+        case 'KeyR': 
+          this.teleportToRandomLocation(); 
+          break;
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      switch (e.code) {
+        case 'KeyW': this.moveDirection.forward = false; break;
+        case 'KeyS': this.moveDirection.backward = false; break;
+        case 'KeyA': this.moveDirection.left = false; break;
+        case 'KeyD': this.moveDirection.right = false; break;
+      }
+    });
+
+    if (!this.isMobileDevice) {
+      // Only add mouse move for non-mobile
+      document.addEventListener('mousemove', (e) => this.handleMouseMove(e), false);
+    }
   }
 
   setupMobileControls() {
@@ -213,31 +310,6 @@ export class Player {
     thumb.style.transform = 'translate(-50%, -50%)';
   }
 
-  handleKeyDown(event) {
-    switch (event.code) {
-      case 'KeyW': this.moveDirection.forward = true; break;
-      case 'KeyS': this.moveDirection.backward = true; break;
-      case 'KeyA': this.moveDirection.left = true; break;
-      case 'KeyD': this.moveDirection.right = true; break;
-      case 'Space': 
-        if (this.isGrounded) {
-          this.verticalVelocity = this.jumpForce;
-          this.isGrounded = false;
-        }
-        break;
-      case 'KeyR': this.teleportToRandomLocation(); break; // Add teleport on R key
-    }
-  }
-
-  handleKeyUp(event) {
-    switch (event.code) {
-      case 'KeyW': this.moveDirection.forward = false; break;
-      case 'KeyS': this.moveDirection.backward = false; break;
-      case 'KeyA': this.moveDirection.left = false; break;
-      case 'KeyD': this.moveDirection.right = false; break;
-    }
-  }
-
   handleMouseMove(event) {
     const smoothingFactor = 0.5;
     
@@ -320,24 +392,28 @@ export class Player {
     this.front.set(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y);
     this.right.set(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotation.y)
 
-    const smoothingFactor = 0.5;
+    // Adjust smoothing factor for more responsive movement
+    const smoothingFactor = 0.7;  // Increased from 0.5
+    
+    // When applying movement direction, use increased smoothing
     if (this.moveDirection.forward) this.direction.add(this.front.clone().multiplyScalar(smoothingFactor));
     if (this.moveDirection.backward) this.direction.sub(this.front.clone().multiplyScalar(smoothingFactor));
     if (this.moveDirection.left) this.direction.sub(this.right.clone().multiplyScalar(smoothingFactor));
     if (this.moveDirection.right) this.direction.add(this.right.clone().multiplyScalar(smoothingFactor));
 
-    // Mobile controls
+    // Mobile controls with increased responsiveness
     if (this.moveJoystickData.active) {
-      const joystickX = this.moveJoystickData.moveX * 0.003;
-      const joystickY = this.moveJoystickData.moveY * 0.003;
+      const joystickX = this.moveJoystickData.moveX * 0.005;  // Increased from 0.003
+      const joystickY = this.moveJoystickData.moveY * 0.005;  // Increased from 0.003
       this.direction.add(this.front.clone().multiplyScalar(-joystickY * smoothingFactor));
       this.direction.add(this.right.clone().multiplyScalar(joystickX * smoothingFactor));
     }
 
-    // Handle look joystick
+    // Look joystick with faster rotation
     if (this.lookJoystickData.active) {
-      this.targetRotation.y -= this.lookJoystickData.moveX * this.touchSensitivity * smoothingFactor;
-      this.targetRotation.x -= this.lookJoystickData.moveY * this.touchSensitivity * smoothingFactor;
+      const lookSmoothingFactor = 0.3;  // Increased from 0.2
+      this.targetRotation.y -= this.lookJoystickData.moveX * this.touchSensitivity * lookSmoothingFactor;
+      this.targetRotation.x -= this.lookJoystickData.moveY * this.touchSensitivity * lookSmoothingFactor;
       this.targetRotation.x = Math.max(this.minRotationX, Math.min(this.maxRotationX, this.targetRotation.x));
       this.targetRotation.y = ((this.targetRotation.y % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
     }
