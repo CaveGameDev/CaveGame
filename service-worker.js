@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cave-game-v2';
+const CACHE_NAME = 'cave-game-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -6,10 +6,10 @@ const urlsToCache = [
   '/world.js',
   '/player.js',
   '/manifest.json',
+  '/three.min.js',  
   '/Screenshot_20250209-154144~2.png',
   '/3227683066.png',
   '/Screenshot_20250209-205941~2.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
   'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'
 ];
 

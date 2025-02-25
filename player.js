@@ -50,7 +50,13 @@ export class Player {
     
     // Adjusted physics values
     this.gravity = 20;
-    this.jumpForce = 8; // Increased jump force
+    this.jumpForce = 10;  // Slightly increased from 8
+    this.jumpCooldown = 50;  // Drastically reduced from 200
+    this.lastJumpTime = 0;
+    this.jumpBufferTime = 50;  // Reduced from 100
+    this.wasGroundedRecently = false;
+    this.groundedTimer = 0;
+    this.groundedThreshold = 0.2;  // Time considered "recently grounded"
     this.verticalVelocity = 0;
     this.isGrounded = false;
 
@@ -121,10 +127,7 @@ export class Player {
         
         // Jump
         case 'Space': 
-          if (this.isGrounded) {
-            this.verticalVelocity = this.jumpForce;
-            this.isGrounded = false;
-          }
+          this.attemptJump();
           break;
         case 'KeyR': 
           this.teleportToRandomLocation(); 
@@ -196,13 +199,9 @@ export class Player {
     });
     
     const jumpButton = document.getElementById('jumpButton');
-    
     jumpButton.addEventListener('touchstart', (e) => {
       e.preventDefault();
-      if (this.isGrounded) {
-        this.verticalVelocity = this.jumpForce;
-        this.isGrounded = false;
-      }
+      this.attemptJump();
     });
   }
 
@@ -379,7 +378,33 @@ export class Player {
            (a.minZ <= b.maxZ && a.maxZ >= b.minZ);
   }
 
+  attemptJump() {
+    const currentTime = performance.now();
+    
+    // More lenient jump conditions
+    const canJump = (this.isGrounded || this.wasGroundedRecently) &&
+                    (currentTime - this.lastJumpTime > this.jumpCooldown);
+    
+    if (canJump) {
+      this.verticalVelocity = this.jumpForce;
+      this.isGrounded = false;
+      this.lastJumpTime = currentTime;
+      this.wasGroundedRecently = false;
+    }
+  }
+
   update(deltaTime) {
+    // Track recent ground status
+    if (this.isGrounded) {
+      this.groundedTimer += deltaTime;
+      if (this.groundedTimer <= this.groundedThreshold) {
+        this.wasGroundedRecently = true;
+      }
+    } else {
+      this.groundedTimer = 0;
+      this.wasGroundedRecently = false;
+    }
+
     // Rotation handling
     this.rotation.x += (this.targetRotation.x - this.rotation.x) * this.rotationLerpFactor;
     this.rotation.y += (this.targetRotation.y - this.rotation.y) * this.rotationLerpFactor;
@@ -436,8 +461,8 @@ export class Player {
     
     // Check ground collision
     const floorY = 0; // Ground level for feet
-    if (newPosition.y <= floorY) {
-      newPosition.y = floorY;
+    if (newPosition.y <= floorY + this.eyeLevel) {
+      newPosition.y = floorY + this.eyeLevel;
       this.verticalVelocity = 0;
       this.isGrounded = true;
     }
