@@ -1,15 +1,15 @@
-const CACHE_NAME = 'cave-game-v3';
+const CACHE_NAME = 'cave-game-v4';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/game.js',
-  '/world.js',
-  '/player.js',
-  '/manifest.json',
-  '/three.min.js',  
-  '/Screenshot_20250209-154144~2.png',
-  '/3227683066.png',
-  '/Screenshot_20250209-205941~2.png',
+  './',
+  './index.html',
+  './game.js',
+  './world.js',
+  './player.js',
+  './manifest.json',
+  './three.min.js',  
+  './Screenshot_20250209-154144~2.png',
+  './3227683066.png',
+  './Screenshot_20250209-205941~2.png',
   'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'
 ];
 

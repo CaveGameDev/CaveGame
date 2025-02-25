@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CaveGame</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#7FCDFE">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -192,9 +192,25 @@
         blockAdScripts();
         setInterval(blockAdScripts, 5000);
 
+        // Add GitHub Pages path handling
+        if (window.location.hostname === 'william0391.github.io') {
+            const baseUrl = '/CaveGame';
+            document.querySelectorAll('script[src], link[href]').forEach(el => {
+                const attr = el.hasAttribute('src') ? 'src' : 'href';
+                const currentPath = el.getAttribute(attr);
+                if (currentPath && !currentPath.startsWith('http')) {
+                    el.setAttribute(attr, `${baseUrl}${currentPath.startsWith('/') ? currentPath : '/' + currentPath}`);
+                }
+            });
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
+                const swPath = window.location.hostname === 'william0391.github.io' 
+                    ? '/CaveGame/service-worker.js' 
+                    : './service-worker.js';
+                
+                navigator.serviceWorker.register(swPath)
                     .then((registration) => {
                         console.log('Service Worker registered with scope:', registration.scope);
                         
@@ -229,26 +245,23 @@
             });
         }
 
-        // Add event listeners to prevent default touch behaviors on joysticks
-        const joystickBases = document.querySelectorAll('.joystick-base');
-        joystickBases.forEach(base => {
-            base.addEventListener('touchstart', (e) => {
+        // Prevent text selection and context menu on joysticks
+        document.addEventListener('DOMContentLoaded', () => {
+            const preventDefaults = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-            }, { passive: false });
+            };
 
-            base.addEventListener('touchmove', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, { passive: false });
-
-            base.addEventListener('touchend', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, { passive: false });
+            const joystickBases = document.querySelectorAll('.joystick-base');
+            joystickBases.forEach(base => {
+                base.addEventListener('selectstart', preventDefaults);
+                base.addEventListener('contextmenu', preventDefaults);
+                base.style.webkitUserSelect = 'none';
+                base.style.userSelect = 'none';
+            });
         });
     </script>
-    <script src="/three.min.js"></script>
-    <script type="module" src="game.js"></script>
+    <script src="./three.min.js"></script>
+    <script type="module" src="./game.js"></script>
 </body>
 </html>

@@ -1,10 +1,13 @@
 export class World {
   constructor(scene) {
+    // Add error logging to help diagnose initialization issues
+    console.log('World initialization started');
+    
     this.scene = scene;
     this.blockSize = 1;
-    this.worldWidth = 128;  // Reduced world size for performance
-    this.worldHeight = 32;  // Reduced height
-    this.worldDepth = 128;  // Reduced depth
+    this.worldWidth = 128;  
+    this.worldHeight = 32;  
+    this.worldDepth = 128;  
     this.blocks = new Map(); 
     this.blockGeometry = null;
     this.materials = {
@@ -13,27 +16,42 @@ export class World {
       grass: null,
       cobblestone: null
     };
+    
+    // Modify texture loading to use absolute paths for GitHub Pages
     this.textureLoader = new THREE.TextureLoader();
-    this.blockOffset = 0.5; // Slight adjustment to center blocks
-    this.initializeGeometry();
-    this.loadTextures();
+    this.blockOffset = 0.5;
+    
+    try {
+      this.initializeGeometry();
+      this.loadTextures();
+    } catch (error) {
+      console.error('World initialization error:', error);
+    }
   }
 
   initializeGeometry() {
-    // Create a single shared geometry for all blocks to reduce memory usage
     this.blockGeometry = new THREE.BoxGeometry(1, 1, 1);
     this.blockGeometry.computeBoundingBox();
+    console.log('Geometry initialized');
   }
 
   loadTextures() {
-    const textureUrls = [
-      '/Screenshot_20250209-154144~2.png',   // Grass
-      '/3227683066.png',                     // Stone
-      '/Screenshot_20250209-205941~2.png'    // Bedrock
-    ];
+    // Adjust paths for GitHub Pages
+    const textureUrls = window.location.hostname === 'william0391.github.io' 
+      ? [
+          '/CaveGame/Screenshot_20250209-154144~2.png',   // Grass
+          '/CaveGame/3227683066.png',                     // Stone
+          '/CaveGame/Screenshot_20250209-205941~2.png'    // Bedrock
+        ]
+      : [
+          '/Screenshot_20250209-154144~2.png',   // Grass
+          '/3227683066.png',                     // Stone
+          '/Screenshot_20250209-205941~2.png'    // Bedrock
+        ];
 
     const texturePromises = textureUrls.map(url => 
       new Promise((resolve, reject) => {
+        console.log(`Loading texture: ${url}`);
         this.textureLoader.load(
           url, 
           (texture) => {
@@ -42,13 +60,17 @@ export class World {
             resolve(texture);
           },
           undefined,
-          reject
+          (error) => {
+            console.error(`Texture load failed for ${url}:`, error);
+            reject(error);
+          }
         );
       })
     );
 
     Promise.all(texturePromises)
       .then(([grassTexture, stoneTexture, bedrockTexture]) => {
+        console.log('All textures loaded successfully');
         this.materials.grass = new THREE.MeshBasicMaterial({ map: grassTexture });
         this.materials.cobblestone = new THREE.MeshBasicMaterial({ map: stoneTexture });
         this.materials.bedrock = new THREE.MeshBasicMaterial({ map: bedrockTexture });
@@ -56,7 +78,7 @@ export class World {
         this.generateTerrain();
       })
       .catch(error => {
-        console.error('Texture loading failed:', error);
+        console.error('Texture loading completely failed:', error);
       });
   }
 
