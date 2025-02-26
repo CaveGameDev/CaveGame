@@ -91,10 +91,13 @@ export class World {
     for (let x = 0; x < width; x++) {
       for (let z = 0; z < depth; z++) {
         const layers = [
-          { y: 0, material: this.materials.bedrock },
+          { y: 0, material: this.materials.cobblestone },
           { y: 1, material: this.materials.cobblestone },
           { y: 2, material: this.materials.cobblestone },
-          { y: 3, material: this.materials.grass }
+          { y: 3, material: this.materials.cobblestone },
+          { y: 4, material: this.materials.cobblestone },
+          { y: 5, material: this.materials.cobblestone },
+          { y: 6, material: this.materials.grass }
         ];
 
         layers.forEach(layer => {
@@ -145,16 +148,12 @@ export class World {
     }
     
     let material;
-    if (y === 0) {
-      material = this.materials.bedrock;
-    } else if (y === 1 || y === 2) {
+    if (y <= 5) {
       material = this.materials.cobblestone;
-    } else if (y === 3) {
+    } else if (y === 6) {
       material = this.materials.grass;
-    } else if (y > 3) {
-      material = this.materials.cobblestone; 
     } else {
-      material = this.materials.grass; 
+      material = this.materials.cobblestone; 
     }
     
     const block = new THREE.Mesh(this.blockGeometry, material);

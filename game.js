@@ -3,23 +3,30 @@ import { Player } from './player.js';
 
 class Game {
   constructor() {
-    this.setupRenderer();
-    this.setupScene();
-    this.setupLighting();
-    
-    if (typeof THREE !== 'undefined') {
-      this.world = new World(this.scene);
-      this.player = new Player(this.camera, this.world);
+    try {
+      this.setupRenderer();
+      this.setupScene();
+      this.setupLighting();
       
-      this.lastTime = performance.now();
-      this.frameCount = 0;
-      this.lastFpsUpdate = 0;
-      
-      this.setupEventListeners();
-      this.ensureMobileControlsVisibility();
-      this.animate();
-    } else {
-      console.error('Three.js is not loaded');
+      if (typeof THREE !== 'undefined') {
+        this.world = new World(this.scene);
+        this.player = new Player(this.camera, this.world);
+        
+        // Set global game reference
+        window.game = this;
+        
+        this.lastTime = performance.now();
+        this.frameCount = 0;
+        this.lastFpsUpdate = 0;
+        
+        this.setupEventListeners();
+        this.ensureMobileControlsVisibility();
+        this.animate();
+      } else {
+        console.error('Three.js is not loaded');
+      }
+    } catch (error) {
+      console.error('Game initialization error:', error);
     }
   }
 
