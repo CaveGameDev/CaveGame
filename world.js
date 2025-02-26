@@ -1,7 +1,6 @@
 export class World {
   constructor(scene) {
-    // Add error logging to help diagnose initialization issues
-    console.log('World initialization started');
+    console.log('World initialization started', window.location.hostname);
     
     this.scene = scene;
     this.blockSize = 1;
@@ -17,7 +16,7 @@ export class World {
       cobblestone: null
     };
     
-    // Modify texture loading to use absolute paths for GitHub Pages
+    // Enhanced texture loading paths
     this.textureLoader = new THREE.TextureLoader();
     this.blockOffset = 0.5;
     
@@ -36,18 +35,15 @@ export class World {
   }
 
   loadTextures() {
-    // Adjust paths for GitHub Pages
-    const textureUrls = window.location.hostname === 'william0391.github.io' 
-      ? [
-          '/CaveGame/Screenshot_20250209-154144~2.png',   // Grass
-          '/CaveGame/3227683066.png',                     // Stone
-          '/CaveGame/Screenshot_20250209-205941~2.png'    // Bedrock
-        ]
-      : [
-          '/Screenshot_20250209-154144~2.png',   // Grass
-          '/3227683066.png',                     // Stone
-          '/Screenshot_20250209-205941~2.png'    // Bedrock
-        ];
+    // Comprehensive path handling
+    const isGitHubPages = window.location.hostname === 'cavegamedev.github.io';
+    const BASE_PATH = isGitHubPages ? '/CaveGame' : '';
+
+    const textureUrls = [
+      `${BASE_PATH}/Screenshot_20250209-154144~2.png`,   // Grass
+      `${BASE_PATH}/3227683066.png`,                     // Stone 
+      `${BASE_PATH}/Screenshot_20250209-205941~2.png`    // Bedrock
+    ];
 
     const texturePromises = textureUrls.map(url => 
       new Promise((resolve, reject) => {
@@ -91,6 +87,7 @@ export class World {
     for (let x = 0; x < width; x++) {
       for (let z = 0; z < depth; z++) {
         const layers = [
+          // Replace bottom layer with 5 layers of stone
           { y: 0, material: this.materials.cobblestone },
           { y: 1, material: this.materials.cobblestone },
           { y: 2, material: this.materials.cobblestone },

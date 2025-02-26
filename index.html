@@ -154,27 +154,30 @@
             const isGitHubPages = window.location.hostname === 'cavegamedev.github.io';
             const BASE_PATH = isGitHubPages ? '/CaveGame' : '';
 
+            // Dynamic script and resource path updater
             function updateResourcePaths() {
                 document.querySelectorAll('script[src], link[href]').forEach(el => {
                     const attr = el.hasAttribute('src') ? 'src' : 'href';
                     let currentPath = el.getAttribute(attr);
                     
-                    // Skip absolute URLs and already correct GitHub Pages URLs
-                    if (!currentPath || currentPath.startsWith('http') || currentPath.startsWith(BASE_PATH)) {
-                        return;
-                    }
+                    // Skip absolute URLs
+                    if (!currentPath || currentPath.startsWith('http')) return;
 
                     // Ensure path starts with a slash
                     currentPath = currentPath.startsWith('/') ? currentPath : `/${currentPath}`;
                     
                     // Prepend base path for GitHub Pages
-                    if (isGitHubPages) {
-                        el.setAttribute(attr, `${BASE_PATH}${currentPath}`);
-                    }
+                    el.setAttribute(attr, `${BASE_PATH}${currentPath}`);
                 });
             }
 
-            // Run on load and create MutationObserver to handle dynamically added resources
+            // Assign global path helpers
+            window.CaveGame = {
+                BASE_PATH: BASE_PATH,
+                isGitHubPages: isGitHubPages
+            };
+
+            // Run on load and create MutationObserver
             window.addEventListener('load', updateResourcePaths);
             
             const observer = new MutationObserver((mutations) => {
@@ -193,9 +196,7 @@
             // Service Worker Registration with dynamic path
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
-                    const swPath = isGitHubPages 
-                        ? `${BASE_PATH}/service-worker.js` 
-                        : './service-worker.js';
+                    const swPath = `${BASE_PATH}/service-worker.js`;
                     
                     navigator.serviceWorker.register(swPath)
                         .then((registration) => {

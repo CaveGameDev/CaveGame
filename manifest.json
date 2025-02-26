@@ -2,18 +2,18 @@
   "name": "CaveGame",
   "short_name": "CaveGame",
   "description": "A voxel-based exploration game",
-  "start_url": "./index.html",
+  "start_url": "/CaveGame/index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#7FCDFE",
   "icons": [
     {
-      "src": "./3227683066.png",
+      "src": "/CaveGame/3227683066.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./Screenshot_20250209-205941~2.png",
+      "src": "/CaveGame/Screenshot_20250209-205941~2.png",
       "sizes": "512x512",
       "type": "image/png"
     }
@@ -22,7 +22,7 @@
   "categories": ["games", "entertainment"],
   "screenshots": [
     {
-      "src": "./Screenshot_20250209-154144~2.png",
+      "src": "/CaveGame/Screenshot_20250209-154144~2.png",
       "sizes": "1280x720",
       "type": "image/png"
     }
