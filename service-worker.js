@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cave-game-v4';
+const CACHE_NAME = 'cave-game-v5';
 const urlsToCache = [
   './',
   './index.html',

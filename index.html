@@ -46,67 +46,34 @@
             gap: 10px;
             align-items: center; 
         }
-        .mobile-controls .joystick-base {
-            margin-top: 10px; 
-        }
-        .joystick-base {
-            width: 100px;
-            height: 100px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
+        .touch-dpad {
+            display: flex;
+            flex-direction: column;
+            width: 120px;
+            height: 120px;
             position: relative;
             pointer-events: auto;
-            touch-action: none;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
         }
-        .joystick-thumb {
+        .touch-dpad-row {
+            display: flex;
+            justify-content: center;
+        }
+        .touch-dpad-btn {
             width: 40px;
             height: 40px;
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            touch-action: none;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
             user-select: none;
+            font-family: 'Press Start 2P', cursive;
+            color: white;
+            font-size: 10px;
         }
-        .crosshair {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .crosshair::before,
-        .crosshair::after {
-            content: '';
-            position: absolute;
-            background: white;
-        }
-        .crosshair::before {
-            width: 2px;
-            height: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .crosshair::after {
-            width: 20px;
-            height: 2px;
-            top: 50%;
-            transform: translateY(-50%);
+        .touch-dpad-btn.active {
+            background: rgba(255, 255, 255, 0.4);
         }
         .bottom-controls {
             position: fixed;
@@ -136,6 +103,34 @@
             user-select: none;
             text-shadow: 2px 2px 0px black; 
         }
+        .crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: white;
+        }
+        .crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .crosshair::after {
+            width: 20px;
+            height: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
         @media (max-width: 600px) {
             .mobile-controls, .bottom-controls {
                 left: 10px;
@@ -159,14 +154,28 @@
     <div class="mobile-controls">
         <div class="left-column">
             <div id="breakButton" class="control-button">BREAK</div>
-            <div id="moveJoystick" class="joystick-base">
-                <div class="joystick-thumb"></div>
+            <div class="touch-dpad" id="movementDpad">
+                <div class="touch-dpad-row">
+                    <div class="touch-dpad-btn" data-direction="up">▲</div>
+                </div>
+                <div class="touch-dpad-row">
+                    <div class="touch-dpad-btn" data-direction="left">◀</div>
+                    <div class="touch-dpad-btn" data-direction="down">▼</div>
+                    <div class="touch-dpad-btn" data-direction="right">▶</div>
+                </div>
             </div>
         </div>
         <div class="right-column">
             <div id="placeButton" class="control-button">PLACE</div>
-            <div id="lookJoystick" class="joystick-base">
-                <div class="joystick-thumb"></div>
+            <div class="touch-dpad" id="lookDpad">
+                <div class="touch-dpad-row">
+                    <div class="touch-dpad-btn" data-direction="up">▲</div>
+                </div>
+                <div class="touch-dpad-row">
+                    <div class="touch-dpad-btn" data-direction="left">◀</div>
+                    <div class="touch-dpad-btn" data-direction="down">▼</div>
+                    <div class="touch-dpad-btn" data-direction="right">▶</div>
+                </div>
             </div>
         </div>
     </div>
@@ -192,8 +201,8 @@
         blockAdScripts();
         setInterval(blockAdScripts, 5000);
 
-        // Add GitHub Pages path handling
-        if (window.location.hostname === 'william0391.github.io') {
+        // Update GitHub Pages path handling
+        if (window.location.hostname === 'cavegamedev.github.io') {
             const baseUrl = '/CaveGame';
             document.querySelectorAll('script[src], link[href]').forEach(el => {
                 const attr = el.hasAttribute('src') ? 'src' : 'href';
@@ -206,7 +215,7 @@
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const swPath = window.location.hostname === 'william0391.github.io' 
+                const swPath = window.location.hostname === 'cavegamedev.github.io' 
                     ? '/CaveGame/service-worker.js' 
                     : './service-worker.js';
                 
@@ -245,20 +254,103 @@
             });
         }
 
-        // Prevent text selection and context menu on joysticks
         document.addEventListener('DOMContentLoaded', () => {
-            const preventDefaults = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            };
+            const movementDpad = document.getElementById('movementDpad');
+            const lookDpad = document.getElementById('lookDpad');
+            const jumpButton = document.getElementById('jumpButton');
+            
+            function setupDpadHandlers(dpad, isMovement) {
+                const buttons = dpad.querySelectorAll('.touch-dpad-btn');
+                
+                const activeButtons = new Set();
+                
+                function updateGameState() {
+                    if (!window.game || !window.game.player) return;
+                    
+                    const player = window.game.player;
+                    
+                    if (isMovement) {
+                        player.moveDirection.forward = false;
+                        player.moveDirection.backward = false;
+                        player.moveDirection.left = false;
+                        player.moveDirection.right = false;
+                        
+                        activeButtons.forEach(direction => {
+                            switch(direction) {
+                                case 'up': player.moveDirection.forward = true; break;
+                                case 'down': player.moveDirection.backward = true; break;
+                                case 'left': player.moveDirection.left = true; break;
+                                case 'right': player.moveDirection.right = true; break;
+                            }
+                        });
+                    } else {
+                        // Reset look directions
+                        player.moveDirection.lookUp = false;
+                        player.moveDirection.lookDown = false;
+                        player.moveDirection.lookLeft = false;
+                        player.moveDirection.lookRight = false;
 
-            const joystickBases = document.querySelectorAll('.joystick-base');
-            joystickBases.forEach(base => {
-                base.addEventListener('selectstart', preventDefaults);
-                base.addEventListener('contextmenu', preventDefaults);
-                base.style.webkitUserSelect = 'none';
-                base.style.userSelect = 'none';
-            });
+                        activeButtons.forEach(direction => {
+                            switch(direction) {
+                                case 'up': player.moveDirection.lookUp = true; break;
+                                case 'down': player.moveDirection.lookDown = true; break;
+                                case 'left': player.moveDirection.lookLeft = true; break;
+                                case 'right': player.moveDirection.lookRight = true; break;
+                            }
+                        });
+                    }
+                }
+                
+                const updateInterval = setInterval(updateGameState, 50);  
+                
+                buttons.forEach(button => {
+                    const preventDefaults = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    };
+                    
+                    const touchStartHandler = (e) => {
+                        preventDefaults(e);
+                        button.classList.add('active');
+                        const direction = button.dataset.direction;
+                        
+                        activeButtons.add(direction);
+                        updateGameState();
+                    };
+                    
+                    const touchEndHandler = (e) => {
+                        preventDefaults(e);
+                        button.classList.remove('active');
+                        const direction = button.dataset.direction;
+                        
+                        activeButtons.delete(direction);
+                        updateGameState();
+                    };
+                    
+                    button.addEventListener('contextmenu', preventDefaults);
+                    button.addEventListener('selectstart', preventDefaults);
+                    
+                    button.addEventListener('touchstart', touchStartHandler);
+                    button.addEventListener('touchend', touchEndHandler);
+                    button.addEventListener('touchcancel', touchEndHandler);
+                    
+                    button.addEventListener('mousedown', touchStartHandler);
+                    button.addEventListener('mouseup', touchEndHandler);
+                    button.addEventListener('mouseleave', touchEndHandler);
+                });
+            }
+            
+            if (jumpButton) {
+                jumpButton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (window.game && window.game.player) {
+                        window.game.player.attemptJump();
+                    }
+                });
+            }
+            
+            setupDpadHandlers(movementDpad, true);
+            setupDpadHandlers(lookDpad, false);
         });
     </script>
     <script src="./three.min.js"></script>
