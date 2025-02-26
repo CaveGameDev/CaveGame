@@ -148,67 +148,6 @@
             cursor: pointer;
         }
     </style>
-    <script>
-        (function() {
-            // Enhanced path handling for GitHub Pages
-            const isGitHubPages = window.location.hostname === 'cavegamedev.github.io';
-            const BASE_PATH = isGitHubPages ? '/CaveGame' : '';
-
-            // Dynamic script and resource path updater
-            function updateResourcePaths() {
-                document.querySelectorAll('script[src], link[href]').forEach(el => {
-                    const attr = el.hasAttribute('src') ? 'src' : 'href';
-                    let currentPath = el.getAttribute(attr);
-                    
-                    // Skip absolute URLs
-                    if (!currentPath || currentPath.startsWith('http')) return;
-
-                    // Ensure path starts with a slash
-                    currentPath = currentPath.startsWith('/') ? currentPath : `/${currentPath}`;
-                    
-                    // Prepend base path for GitHub Pages
-                    el.setAttribute(attr, `${BASE_PATH}${currentPath}`);
-                });
-            }
-
-            // Assign global path helpers
-            window.CaveGame = {
-                BASE_PATH: BASE_PATH,
-                isGitHubPages: isGitHubPages
-            };
-
-            // Run on load and create MutationObserver
-            window.addEventListener('load', updateResourcePaths);
-            
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.type === 'childList') {
-                        updateResourcePaths();
-                    }
-                });
-            });
-
-            observer.observe(document.documentElement, {
-                childList: true,
-                subtree: true
-            });
-
-            // Service Worker Registration with dynamic path
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    const swPath = `${BASE_PATH}/service-worker.js`;
-                    
-                    navigator.serviceWorker.register(swPath)
-                        .then((registration) => {
-                            console.log('Service Worker registered with scope:', registration.scope);
-                        })
-                        .catch((error) => {
-                            console.error('Service Worker registration failed:', error);
-                        });
-                });
-            }
-        })();
-    </script>
 </head>
 <body>
     <div class="crosshair"></div>
@@ -261,6 +200,59 @@
 
         blockAdScripts();
         setInterval(blockAdScripts, 5000);
+
+        // Add GitHub Pages path handling
+        if (window.location.hostname === 'william0391.github.io') {
+            const baseUrl = '/CaveGame';
+            document.querySelectorAll('script[src], link[href]').forEach(el => {
+                const attr = el.hasAttribute('src') ? 'src' : 'href';
+                const currentPath = el.getAttribute(attr);
+                if (currentPath && !currentPath.startsWith('http')) {
+                    el.setAttribute(attr, `${baseUrl}${currentPath.startsWith('/') ? currentPath : '/' + currentPath}`);
+                }
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swPath = window.location.hostname === 'william0391.github.io' 
+                    ? '/CaveGame/service-worker.js' 
+                    : './service-worker.js';
+                
+                navigator.serviceWorker.register(swPath)
+                    .then((registration) => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                        
+                        window.addEventListener('beforeinstallprompt', (e) => {
+                            e.preventDefault();
+                            const installPrompt = e;
+                            
+                            const installButton = document.createElement('button');
+                            installButton.textContent = 'Install Game';
+                            installButton.style.position = 'fixed';
+                            installButton.style.top = '10px';
+                            installButton.style.right = '10px';
+                            installButton.style.zIndex = '100';
+                            
+                            installButton.addEventListener('click', () => {
+                                installPrompt.prompt();
+                                installPrompt.userChoice.then((choiceResult) => {
+                                    if (choiceResult.outcome === 'accepted') {
+                                        console.log('User accepted the install prompt');
+                                    } else {
+                                        console.log('User dismissed the install prompt');
+                                    }
+                                });
+                            });
+                            
+                            document.body.appendChild(installButton);
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const movementDpad = document.getElementById('movementDpad');
